@@ -14,8 +14,16 @@ class Serial(anyio.abc.ByteStream):
         self._send_lock = anyio.create_lock()
         self._receive_lock = anyio.create_lock()
 
+    async def __aenter__(self):
+        self._ctx = self._open()
+        return await self._ctx.__aenter()
+
+    async def __aexit__(self, *tb):
+        return await self._ctx.__aexit(*tb)
+
+
     @asynccontextmanager
-    async def open(self):
+    async def _open(self):
         await anyio.run_sync_in_worker_thread(self._open)
         try:
             yield self

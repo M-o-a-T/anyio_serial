@@ -40,7 +40,7 @@ class Serial(anyio.abc.ByteStream):
 
 
     def _open(self):
-        self._port = serial.Serial(*self._a, **self.kw)
+        self._port = serial.Serial(*self._a, **self._kw)
 
     def _close(self, port):
         port.close()

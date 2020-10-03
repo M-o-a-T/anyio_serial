@@ -1,0 +1,11 @@
+anyio-serial (0.1.0-1) unstable; urgency=medium
+
+  * Initial checkin
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Sun, 04 Oct 2020 22:26:48 +0200
+
+anyio-serial (0.0.0-1) smurf; urgency=low
+
+  * source package automatically created by stdeb 0.9.1
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Sat, 03 Oct 2020 21:30:33 +0200

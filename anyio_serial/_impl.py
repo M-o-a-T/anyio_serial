@@ -5,6 +5,8 @@
 import anyio
 import serial
 
+from contextlib import asynccontextmanager
+
 class Serial(anyio.abc.ByteStream):
     _port = None
 

@@ -50,11 +50,11 @@ class Serial(anyio.abc.ByteStream):
 
     async def receive(self, max_bytes=4096):
         async with self._receive_lock:
-            return await anyio.run_sync_in_worker_thread(self._read, max_bytes)
+            return await anyio.run_sync_in_worker_thread(self._read, max_bytes, cancellable=True)
 
     async def send(self, bytes):
         async with self._send_lock:
-            return await anyio.run_sync_in_worker_thread(self._port.write, bytes)
+            return await anyio.run_sync_in_worker_thread(self._port.write, bytes, cancellable=True)
 
     def _read(self, max_bytes):
         p = self._port

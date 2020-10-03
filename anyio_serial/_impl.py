@@ -18,10 +18,10 @@ class Serial(anyio.abc.ByteStream):
 
     async def __aenter__(self):
         self._ctx = self._open()
-        return await self._ctx.__aenter()
+        return await self._ctx.__aenter__()
 
     async def __aexit__(self, *tb):
-        return await self._ctx.__aexit(*tb)
+        return await self._ctx.__aexit__(*tb)
 
 
     @asynccontextmanager

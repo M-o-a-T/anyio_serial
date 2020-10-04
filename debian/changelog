@@ -1,3 +1,9 @@
+anyio-serial (0.1.0-2) unstable; urgency=medium
+
+  * depend on py-serial
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Sun, 04 Oct 2020 22:35:33 +0200
+
 anyio-serial (0.1.0-1) unstable; urgency=medium
 
   * Initial checkin

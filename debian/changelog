@@ -1,3 +1,9 @@
+anyio-serial (0.1.3-1) unstable; urgency=medium
+
+  * Merge
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Mon, 05 Oct 2020 09:20:09 +0200
+
 anyio-serial (0.1.0-2) unstable; urgency=medium
 
   * depend on py-serial

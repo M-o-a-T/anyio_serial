@@ -15,7 +15,6 @@ A simple serial port reader
 +++++++++++++++++++++++++++
 
 ::
-   ```py
    import anyio
    from anyio_serial import Serial
 

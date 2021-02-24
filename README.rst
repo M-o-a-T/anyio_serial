@@ -20,13 +20,10 @@ anyio_serial is a reasonably intuitive mash-up of `pySerial`_ and anyio's
    import anyio
    from anyio_serial import Serial
    
-   async def read_and_print(port: Serial):
-      while True:
-         print((await port.read).decode(errors='ignore'), end='', flush=True)
-   
    async def main():
       async with Serial(port='COM1') as port:
-         await read_and_print(port)
+         while True:
+            print((await port.receive()).decode(errors='ignore'), end='', flush=True)
    
    anyio.run(main)
 

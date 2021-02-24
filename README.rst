@@ -14,40 +14,35 @@ Quick start
 A simple serial port reader
 +++++++++++++++++++++++++++
 
-::
+anyio_serial is a reasonably intuitive mash-up of `pySerial`_ and anyio's
+``Stream``::
+
    import anyio
    from anyio_serial import Serial
-
-
+   
    async def read_and_print(port: Serial):
       while True:
          print((await port.read).decode(errors='ignore'), end='', flush=True)
-
+   
    async def main():
       async with Serial(port='COM1') as port:
          await read_and_print(port)
-
+   
    anyio.run(main)
 
 API
 ===
 
-Serial
-++++++
+anyio_serial's interface is really simple::
 
-::
    from anyio_serial import Serial
-
-Constructor
------------
-
-::
+   
    async with Serial(...) as port:  # same options as serial.Serial
       ...
       # use "port" like any other anyio ByteStream
 
 Attributes
-----------
+++++++++++
 
 The states of the serial status lines ``cd``, ``cts``, ``dsr`` and ``ri``
 are supported.

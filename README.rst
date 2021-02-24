@@ -2,8 +2,8 @@
 anyio_serial
 ============
 
-A small Python wrapper that combines [anyio](https://anyio.readthedocs.io)
-and [pySerial](https://pypi.org/project/pyserial/).
+A small Python wrapper that combines `anyio <https://anyio.readthedocs.io>`_
+and `pySerial <https://pypi.org/project/pyserial/>`_.
 
 Implementation detail: This library is using too many short-lived threads.
 Yes this should be improved.

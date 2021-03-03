@@ -69,8 +69,8 @@ class Serial(anyio.abc.ByteStream):
         return self._port.cd
 
     @property
-    def dts(self):
-        return self._port.dts
+    def cts(self):
+        return self._port.cts
 
     @property
     def dsr(self):

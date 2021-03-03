@@ -2,10 +2,13 @@
 #
 # License: MIT
 
-import anyio
-import serial
-
 from contextlib import asynccontextmanager
+
+import anyio.abc
+import serial
+from anyio import BrokenResourceError, ClosedResourceError
+from serial import SerialException
+
 
 class Serial(anyio.abc.ByteStream):
     _port = None
@@ -46,15 +49,29 @@ class Serial(anyio.abc.ByteStream):
         port.close()
 
     async def send_eof(self):
-        pass
+        raise NotImplementedError("Serial ports don't support sending EOF")
 
     async def receive(self, max_bytes=4096):
+        if not self._port.isOpen():
+            raise ClosedResourceError
+
         async with self._receive_lock:
-            return await anyio.run_sync_in_worker_thread(self._read, max_bytes, cancellable=True)
+            try:
+                return await anyio.run_sync_in_worker_thread(self._read, max_bytes,
+                                                             cancellable=True)
+            except (OSError, SerialException) as exc:
+                raise BrokenResourceError from exc
 
     async def send(self, bytes):
+        if not self._port.isOpen():
+            raise ClosedResourceError
+
         async with self._send_lock:
-            return await anyio.run_sync_in_worker_thread(self._port.write, bytes, cancellable=True)
+            try:
+                return await anyio.run_sync_in_worker_thread(self._port.write, bytes,
+                                                             cancellable=True)
+            except (OSError, SerialException) as exc:
+                raise BrokenResourceError from exc
 
     def _read(self, max_bytes):
         p = self._port

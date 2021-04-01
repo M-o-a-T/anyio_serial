@@ -8,11 +8,11 @@ from functools import partial
 from typing import Any, Type, TypeVar
 
 import anyio
-import serial as pyserial
+import serial as pyserial  # type: ignore
 from anyio import run_async_from_thread, run_sync_in_worker_thread
 from anyio.abc import ByteStream
 from anyio.streams.buffered import BufferedByteReceiveStream
-from serial.serialutil import PortNotOpenError
+from serial.serialutil import PortNotOpenError  # type: ignore
 
 
 T = TypeVar("T", bound="Serial")

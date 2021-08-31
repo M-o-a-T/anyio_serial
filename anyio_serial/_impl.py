@@ -29,6 +29,9 @@ class Serial(anyio.abc.ByteStream):
 
     @asynccontextmanager
     async def _gen_ctx(self):
+        if self._port is not None:
+            yield self
+            return
         await anyio.run_sync_in_worker_thread(self._open)
         try:
             yield self

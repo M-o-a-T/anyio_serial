@@ -97,3 +97,19 @@ class Serial(anyio.abc.ByteStream):
     def ri(self):
         return self._port.ri
 
+    @property
+    def dtr(self):
+        return self._port.dtr
+
+    @dtr.setter
+    def dtr(self, val):
+        self._port.dtr = val
+
+    @property
+    def rts(self):
+        return self._port.rts
+
+    @rts.setter
+    def rts(self, val):
+        self._port.rts = val
+

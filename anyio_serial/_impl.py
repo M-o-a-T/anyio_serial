@@ -29,6 +29,9 @@ class Serial(anyio.abc.ByteStream):
 
     @asynccontextmanager
     async def _gen_ctx(self):
+        if self._port is not None:
+            yield self
+            return
         await anyio.run_sync_in_worker_thread(self._open)
         try:
             yield self
@@ -52,7 +55,7 @@ class Serial(anyio.abc.ByteStream):
         raise NotImplementedError("Serial ports don't support sending EOF")
 
     async def receive(self, max_bytes=4096):
-        if not self._port.isOpen():
+        if not self.port or not self._port.isOpen():
             raise ClosedResourceError
 
         async with self._receive_lock:
@@ -63,7 +66,7 @@ class Serial(anyio.abc.ByteStream):
                 raise BrokenResourceError from exc
 
     async def send(self, bytes):
-        if not self._port.isOpen():
+        if not self.port or not self._port.isOpen():
             raise ClosedResourceError
 
         async with self._send_lock:
@@ -75,6 +78,8 @@ class Serial(anyio.abc.ByteStream):
 
     def _read(self, max_bytes):
         p = self._port
+        if p is None:
+            raise ClosedResourceError
         if not p.in_waiting:
             return p.read()
         if p.in_waiting < max_bytes:
@@ -83,23 +88,23 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def cd(self):
-        return self._port.cd
+        return self._port.cd if self._port else None
 
     @property
     def cts(self):
-        return self._port.cts
+        return self._port.cts if self._port else None
 
     @property
     def dsr(self):
-        return self._port.dsr
+        return self._port.dsr if self._port else None
 
     @property
     def ri(self):
-        return self._port.ri
+        return self._port.ri if self._port else None
 
     @property
     def baudrate(self):
-        return self._port.baudrate
+        return self._port.baudrate if self._port else None
 
     @baudrate.setter
     def baudrate(self, val):
@@ -107,7 +112,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def bytesize(self):
-        return self._port.bytesize
+        return self._port.bytesize if self._port else None
 
     @bytesize.setter
     def bytesize(self, val):
@@ -115,7 +120,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def parity(self):
-        return self._port.parity
+        return self._port.parity if self._port else None
 
     @parity.setter
     def parity(self, val):
@@ -123,7 +128,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def stopbits(self):
-        return self._port.stopbits
+        return self._port.stopbits if self._port else None
 
     @stopbits.setter
     def stopbits(self, val):
@@ -131,7 +136,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def dtr(self):
-        return self._port.dtr
+        return self._port.dtr if self._port else None
 
     @dtr.setter
     def dtr(self, val):
@@ -139,7 +144,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def rts(self):
-        return self._port.rts
+        return self._port.rts if self._port else None
 
     @rts.setter
     def rts(self, val):
@@ -147,7 +152,7 @@ class Serial(anyio.abc.ByteStream):
 
     @property
     def break_condition(self):
-        return self._port.break_condition
+        return self._port.break_condition if self._port else None
 
     @break_condition.setter
     def break_condition(self, val):

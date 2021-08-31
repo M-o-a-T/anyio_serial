@@ -98,6 +98,38 @@ class Serial(anyio.abc.ByteStream):
         return self._port.ri
 
     @property
+    def baudrate(self):
+        return self._port.baudrate
+
+    @baudrate.setter
+    def baudrate(self, val):
+        self._port.baudrate = val
+
+    @property
+    def bytesize(self):
+        return self._port.bytesize
+
+    @bytesize.setter
+    def bytesize(self, val):
+        self._port.bytesize = val
+
+    @property
+    def parity(self):
+        return self._port.parity
+
+    @parity.setter
+    def parity(self, val):
+        self._port.parity = val
+
+    @property
+    def stopbits(self):
+        return self._port.stopbits
+
+    @stopbits.setter
+    def stopbits(self, val):
+        self._port.stopbits = val
+
+    @property
     def dtr(self):
         return self._port.dtr
 

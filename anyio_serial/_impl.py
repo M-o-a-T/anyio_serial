@@ -55,7 +55,7 @@ class Serial(anyio.abc.ByteStream):
         raise NotImplementedError("Serial ports don't support sending EOF")
 
     async def receive(self, max_bytes=4096):
-        if not self.port or not self._port.isOpen():
+        if not self._port or not self._port.isOpen():
             raise ClosedResourceError
 
         async with self._receive_lock:
@@ -66,7 +66,7 @@ class Serial(anyio.abc.ByteStream):
                 raise BrokenResourceError from exc
 
     async def send(self, bytes):
-        if not self.port or not self._port.isOpen():
+        if not self._port or not self._port.isOpen():
             raise ClosedResourceError
 
         async with self._send_lock:

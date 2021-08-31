@@ -113,3 +113,20 @@ class Serial(anyio.abc.ByteStream):
     def rts(self, val):
         self._port.rts = val
 
+    @property
+    def break_condition(self):
+        return self._port.break_condition
+
+    @break_condition.setter
+    def break_condition(self, val):
+        self._port.break_condition = val
+
+    async def send_break(self, duration=0.25):
+        """\ 
+        Send break condition. Timed, returns to idle state after given
+        duration.
+        """
+        self.break_condition = True
+        await anyio.sleep(duration)
+        self.break_condition = False  
+

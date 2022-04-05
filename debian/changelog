@@ -1,3 +1,9 @@
+anyio-serial (0.1.12-1) unstable; urgency=medium
+
+  * Merge
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Tue, 05 Apr 2022 13:10:44 +0200
+
 anyio-serial (0.1.11-1) unstable; urgency=medium
 
   * Add from_url method

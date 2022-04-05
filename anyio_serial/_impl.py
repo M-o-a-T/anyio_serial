@@ -57,7 +57,7 @@ class Serial(anyio.abc.ByteStream):
     def _open(self):
         try:
             pg = self._kw.pop("portgen")
-        except KeyErrror:
+        except KeyError:
             self._port = serial.Serial(*self._a, **self._kw)
         else:
             self._port = portgen()

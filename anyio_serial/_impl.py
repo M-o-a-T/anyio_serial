@@ -26,6 +26,15 @@ class Serial(anyio.abc.ByteStream):
     async def __aexit__(self, *tb):
         return await self._ctx.__aexit__(*tb)
 
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        """
+        Open a `Serial` port with a URL.
+        See https://pyserial.readthedocs.io/en/latest/url_handlers.html
+        """
+        kwargs["do_not_open"] = True
+        serial = lambda: pyserial.serial_for_url(url, **kwargs)
+        return cls(portgen=serial)
 
     @asynccontextmanager
     async def _gen_ctx(self):
@@ -46,7 +55,12 @@ class Serial(anyio.abc.ByteStream):
 
 
     def _open(self):
-        self._port = serial.Serial(*self._a, **self._kw)
+        try:
+            pg = self._kw.pop("portgen")
+        except KeyErrror:
+            self._port = serial.Serial(*self._a, **self._kw)
+        else:
+            self._port = portgen()
 
     def _close(self, port):
         port.close()

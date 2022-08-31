@@ -7,17 +7,29 @@ from contextlib import asynccontextmanager
 import anyio.abc
 import serial
 from anyio import BrokenResourceError, ClosedResourceError
+from anyio.abc import ByteStream
+from anyio.streams.buffered import BufferedByteReceiveStream
 from serial import SerialException
+from serial.serialutil import PortNotOpenError  # type: ignore
+from functools import partial
 
 
 class Serial(anyio.abc.ByteStream):
     _port = None
 
-    def __init__(self, *a, **kw):
+    def __init__(self, *a, max_read_size=1024, **kw):
         self._a = a
         self._kw = kw
-        self._send_lock = anyio.create_lock()
-        self._receive_lock = anyio.create_lock()
+        self.max_read_size = max_read_size
+
+        self._read_producer, self._read_consumer = anyio.create_memory_object_stream(
+            0, item_type=bytes
+        )
+        self._write_producer, self._write_consumer = anyio.create_memory_object_stream(
+            0, item_type=bytes
+        )
+        self._read_stream = BufferedByteReceiveStream(self._read_consumer)
+
 
     async def __aenter__(self):
         self._ctx = self._gen_ctx()
@@ -26,41 +38,32 @@ class Serial(anyio.abc.ByteStream):
     async def __aexit__(self, *tb):
         return await self._ctx.__aexit__(*tb)
 
-    @classmethod
-    def from_url(cls, url, **kwargs):
-        """
-        Open a `Serial` port with a URL.
-        See https://pyserial.readthedocs.io/en/latest/url_handlers.html
-        """
-        kwargs["do_not_open"] = True
-        serial = lambda: pyserial.serial_for_url(url, **kwargs)
-        return cls(portgen=serial)
 
     @asynccontextmanager
     async def _gen_ctx(self):
         if self._port is not None:
             yield self
             return
-        await anyio.run_sync_in_worker_thread(self._open)
-        try:
-            yield self
-        finally:
-            await self.aclose()
+        await anyio.to_thread.run_sync(self._open)
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, cancellable=True))
+            tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, cancellable=True))
+            try:
+                yield self
+            finally:
+                tg.cancel_scope.cancel()
+                with anyio.fail_after(0.2, shield=True):
+                    await self.aclose()
 
     async def aclose(self):
         port, self._port = self._port, None
         if port is None:
             return
-        await anyio.run_sync_in_worker_thread(self._close, port)
+        await anyio.to_thread.run_sync(self._close, port)
 
 
     def _open(self):
-        try:
-            pg = self._kw.pop("portgen")
-        except KeyError:
-            self._port = serial.Serial(*self._a, **self._kw)
-        else:
-            self._port = portgen()
+        self._port = serial.Serial(*self._a, **self._kw)
 
     def _close(self, port):
         port.close()
@@ -68,37 +71,56 @@ class Serial(anyio.abc.ByteStream):
     async def send_eof(self):
         raise NotImplementedError("Serial ports don't support sending EOF")
 
-    async def receive(self, max_bytes=4096):
-        if not self._port or not self._port.isOpen():
-            raise ClosedResourceError
-
-        async with self._receive_lock:
-            try:
-                return await anyio.run_sync_in_worker_thread(self._read, max_bytes,
-                                                             cancellable=True)
-            except (OSError, SerialException) as exc:
-                raise BrokenResourceError from exc
-
-    async def send(self, bytes):
-        if not self._port or not self._port.isOpen():
-            raise ClosedResourceError
-
-        async with self._send_lock:
-            try:
-                return await anyio.run_sync_in_worker_thread(self._port.write, bytes,
-                                                             cancellable=True)
-            except (OSError, SerialException) as exc:
-                raise BrokenResourceError from exc
-
-    def _read(self, max_bytes):
+    def _read(self):
         p = self._port
         if p is None:
             raise ClosedResourceError
         if not p.in_waiting:
             return p.read()
-        if p.in_waiting < max_bytes:
-            max_bytes = p.in_waiting
-        return p.read(max_bytes)
+        return p.read(min(p.in_waiting, self.max_read_size))
+
+    def _read_worker(self) -> None:
+        while True:
+            try:
+                data = self._read()
+                anyio.from_thread.run(self._read_producer.send, data)
+            except (PortNotOpenError, anyio.ClosedResourceError):
+                return
+
+    def _write_worker(self) -> None:
+        p = self._port
+        while True:
+            try:
+                data = anyio.from_thread.run(self._write_consumer.receive)
+                p.write(data)
+            except (PortNotOpenError, anyio.EndOfStream):
+                return
+
+    async def receive(self, max_bytes: int = 4096) -> bytes:
+        """
+        Read at most max_bytes bytes from the serial port.
+        """
+        return await self._read_stream.receive(max_bytes=max_bytes)
+
+    async def receive_exactly(self, nbytes: int) -> bytes:
+        """
+        Read exactly the given amount of bytes from the serial port.
+        """
+        return await self._read_stream.receive_exactly(nbytes)
+
+    async def receive_until(self, delimiter: bytes, max_bytes: int) -> bytes:
+        """
+        Read from the serial port until the `delimiter` is found or `max_bytes` have been read.
+        """
+        return await self._read_stream.receive_until(delimiter, max_bytes)
+
+    async def send(self, data: bytes) -> None:
+        """
+        Write data to the serial port.
+        """
+        if not self._port.is_open:
+            raise anyio.ClosedResourceError()
+        await self._write_producer.send(data)
 
     @property
     def cd(self):

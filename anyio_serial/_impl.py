@@ -47,6 +47,8 @@ class Serial(anyio.abc.ByteStream):
             yield self
             return
         await anyio.to_thread.run_sync(self._open)
+        if self._port is None:
+            raise RuntimeError("Port not opened: %r %r", self._a, self._kw)
         async with anyio.create_task_group() as tg:
             tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, cancellable=True))
             tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, cancellable=True))

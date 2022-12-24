@@ -20,6 +20,8 @@ class Serial(anyio.abc.ByteStream):
     def __init__(self, *a, max_read_size=1024, **kw):
         self._a = a
         self._kw = kw
+        if not a and not kw:
+            raise RuntimeError("No arguments given")
         self.max_read_size = max_read_size
 
         self._read_producer, self._read_consumer = anyio.create_memory_object_stream(

@@ -20,6 +20,8 @@ class Serial(anyio.abc.ByteStream):
     def __init__(self, *a, max_read_size=1024, **kw):
         self._a = a
         self._kw = kw
+        if not a and not kw:
+            raise RuntimeError("No arguments given")
         self.max_read_size = max_read_size
 
         self._read_producer, self._read_consumer = anyio.create_memory_object_stream(
@@ -45,6 +47,8 @@ class Serial(anyio.abc.ByteStream):
             yield self
             return
         await anyio.to_thread.run_sync(self._open)
+        if self._port is None:
+            raise RuntimeError("Port not opened: %r %r", self._a, self._kw)
         async with anyio.create_task_group() as tg:
             tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, cancellable=True))
             tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, cancellable=True))

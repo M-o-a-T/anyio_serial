@@ -79,8 +79,11 @@ class Serial(anyio.abc.ByteStream):
         p = self._port
         if p is None:
             raise ClosedResourceError
-        if not p.in_waiting:
-            return p.read()
+        try:
+            if not p.in_waiting:
+                return p.read()
+        except AttributeError:
+            raise ClosedResourceError
         return p.read(min(p.in_waiting, self.max_read_size))
 
     def _read_worker(self) -> None:

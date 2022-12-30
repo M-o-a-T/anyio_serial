@@ -1,3 +1,9 @@
+anyio-serial (0.2.1-1) unstable; urgency=medium
+
+  * Merge
+
+ -- Matthias Urlichs <matthias@urlichs.de>  Fri, 30 Dec 2022 21:48:12 +0100
+
 anyio-serial (0.2.0-2) unstable; urgency=medium
 
   * compat 13

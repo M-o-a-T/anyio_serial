@@ -82,8 +82,8 @@ class Serial(anyio.abc.ByteStream):
         try:
             if not p.in_waiting:
                 return p.read()
-        except AttributeError:
-            raise ClosedResourceError
+        except TypeError:
+            raise ClosedResourceError from None  # closed under us
         return p.read(min(p.in_waiting, self.max_read_size))
 
     def _read_worker(self) -> None:
@@ -100,7 +100,7 @@ class Serial(anyio.abc.ByteStream):
             try:
                 data = anyio.from_thread.run(self._write_consumer.receive)
                 p.write(data)
-            except (PortNotOpenError, anyio.EndOfStream):
+            except (PortNotOpenError, anyio.EndOfStream, TypeError):
                 return
 
     async def receive(self, max_bytes: int = 4096) -> bytes:

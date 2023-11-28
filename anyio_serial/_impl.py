@@ -125,7 +125,7 @@ class Serial(anyio.abc.ByteStream):
         """
         Write data to the serial port.
         """
-        if not self._port.is_open:
+        if self._port is None or not self._port.is_open:
             raise anyio.ClosedResourceError()
         await self._write_producer.send(data)
 

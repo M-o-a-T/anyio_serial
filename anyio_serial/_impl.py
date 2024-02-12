@@ -24,12 +24,8 @@ class Serial(anyio.abc.ByteStream):
             raise RuntimeError("No arguments given")
         self.max_read_size = max_read_size
 
-        self._read_producer, self._read_consumer = anyio.create_memory_object_stream(
-            0, item_type=bytes
-        )
-        self._write_producer, self._write_consumer = anyio.create_memory_object_stream(
-            0, item_type=bytes
-        )
+        self._read_producer, self._read_consumer = anyio.create_memory_object_stream[bytes](0)
+        self._write_producer, self._write_consumer = anyio.create_memory_object_stream[bytes](0)
         self._read_stream = BufferedByteReceiveStream(self._read_consumer)
 
 
@@ -125,7 +121,7 @@ class Serial(anyio.abc.ByteStream):
         """
         Write data to the serial port.
         """
-        if not self._port.is_open:
+        if self._port is None or not self._port.is_open:
             raise anyio.ClosedResourceError()
         await self._write_producer.send(data)
 

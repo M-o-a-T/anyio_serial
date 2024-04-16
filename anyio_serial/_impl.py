@@ -203,5 +203,5 @@ class Serial(anyio.abc.ByteStream):
         """
         self.break_condition = True
         await anyio.sleep(duration)
-        self.break_condition = False  
+        self.break_condition = False
 

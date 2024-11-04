@@ -46,8 +46,8 @@ class Serial(anyio.abc.ByteStream):
         if self._port is None:
             raise RuntimeError("Port not opened: %r %r", self._a, self._kw)
         async with anyio.create_task_group() as tg:
-            tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, cancellable=True))
-            tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, cancellable=True))
+            tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, abandon_on_cancel=True))
+            tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, abandon_on_cancel=True))
             try:
                 yield self
             finally:
@@ -198,11 +198,10 @@ class Serial(anyio.abc.ByteStream):
         self._port.break_condition = val
 
     async def send_break(self, duration=0.25):
-        """\ 
-        Send break condition. Timed, returns to idle state after given
-        duration.
+        """
+        Send break condition. Timed, returns to idle state after given duration.
         """
         self.break_condition = True
         await anyio.sleep(duration)
-        self.break_condition = False  
+        self.break_condition = False
 

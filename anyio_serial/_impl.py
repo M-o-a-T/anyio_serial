@@ -6,10 +6,9 @@ from contextlib import asynccontextmanager
 
 import anyio.abc
 import serial
-from anyio import BrokenResourceError, ClosedResourceError
-from anyio.abc import ByteStream
+from anyio import ClosedResourceError
 from anyio.streams.buffered import BufferedByteReceiveStream
-from serial import SerialException
+from serial import SerialException as SerialException
 from serial.serialutil import PortNotOpenError  # type: ignore
 from functools import partial
 
@@ -24,10 +23,13 @@ class Serial(anyio.abc.ByteStream):
             raise RuntimeError("No arguments given")
         self.max_read_size = max_read_size
 
-        self._read_producer, self._read_consumer = anyio.create_memory_object_stream[bytes](0)
-        self._write_producer, self._write_consumer = anyio.create_memory_object_stream[bytes](0)
+        self._read_producer, self._read_consumer = anyio.create_memory_object_stream[
+            bytes
+        ](0)
+        self._write_producer, self._write_consumer = anyio.create_memory_object_stream[
+            bytes
+        ](0)
         self._read_stream = BufferedByteReceiveStream(self._read_consumer)
-
 
     async def __aenter__(self):
         self._ctx = self._gen_ctx()
@@ -35,7 +37,6 @@ class Serial(anyio.abc.ByteStream):
 
     async def __aexit__(self, *tb):
         return await self._ctx.__aexit__(*tb)
-
 
     @asynccontextmanager
     async def _gen_ctx(self):
@@ -46,8 +47,16 @@ class Serial(anyio.abc.ByteStream):
         if self._port is None:
             raise RuntimeError("Port not opened: %r %r", self._a, self._kw)
         async with anyio.create_task_group() as tg:
-            tg.start_soon(partial(anyio.to_thread.run_sync, self._read_worker, abandon_on_cancel=True))
-            tg.start_soon(partial(anyio.to_thread.run_sync, self._write_worker, abandon_on_cancel=True))
+            tg.start_soon(
+                partial(
+                    anyio.to_thread.run_sync, self._read_worker, abandon_on_cancel=True
+                )
+            )
+            tg.start_soon(
+                partial(
+                    anyio.to_thread.run_sync, self._write_worker, abandon_on_cancel=True
+                )
+            )
             try:
                 yield self
             finally:
@@ -60,7 +69,6 @@ class Serial(anyio.abc.ByteStream):
         if port is None:
             return
         await anyio.to_thread.run_sync(self._close, port)
-
 
     def _open(self):
         self._port = serial.Serial(*self._a, **self._kw)
@@ -204,4 +212,3 @@ class Serial(anyio.abc.ByteStream):
         self.break_condition = True
         await anyio.sleep(duration)
         self.break_condition = False
-
